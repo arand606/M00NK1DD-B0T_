@@ -25,9 +25,9 @@ export const botConfig = {
     activities: [
       {
         // Text users will see (example: "Playing /help | Titan Bot").
-        name: "Watching Channels | Team M00NK1DD Join Today!               M00NK1DD > C00lkid ",
+        name: "Watching Channels | Team M00NK1DD Join Today!",
         // Activity type number (0 = Playing).
-        type: 3, 
+        type: 4, 
       },
     ],
   },
@@ -81,7 +81,7 @@ export const botConfig = {
     deleteApprovedAfter: 30, 
 
     // Role IDs allowed to manage applications.
-    managerRoles: [], // Will be populated from environment or database
+    managerRoles: [1477697404592455927,1497297060318150696,1470022111916462247], // Will be populated from environment or database
   },
 
   // =========================
