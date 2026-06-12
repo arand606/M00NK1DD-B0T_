@@ -141,11 +141,10 @@ export const botConfig = {
       // Default footer text used in bot embeds.
       text: "M00NB0T",
       // Footer icon URL (null = no icon).
-      icon: https://cdn.discordapp.com/attachments/1513201071793635480/1514923263598268426/IMG_20260607_180601.jpg?ex=6a2d21bb&is=6a2bd03b&hm=246414a7e0ab617ef5b4004a3fdcc8b9dfa3fba797589bebb585adce574a4cfe&,
+      icon: null,
     },
     // Default thumbnail URL for embeds (null = no thumbnail).
-    thumbnail: https://cdn.discordapp.com/attachments/1513201071793635480/1514923263598268426/IMG_20260607_180601.jpg?ex=6a2d21bb&is=6a2bd03b&hm=246414a7e0ab617ef5b4004a3fdcc8b9dfa3fba797589bebb585adce574a4cfe&,
-    author: {
+    thumbnail: null,    author: {
       // Optional default embed author block.
       name: null,
       icon: null,
