@@ -30,7 +30,7 @@ export const botConfig = {
         type: 0, // 0 = Playing
       },
       {
-        name: "Lua Script warnings",
+        name: "OWO Please join M00NK1DD~ 🥺",
         type: 2, // 2 = Listening
       },
       {
