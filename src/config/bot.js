@@ -47,7 +47,7 @@ export const botConfig = {
   commands: {
     // Bot owner user IDs (comma-separated in OWNER_IDS env var).
     // Owners can access owner/admin-level bot commands.
-    owners: process.env.OWNER_IDS?.split(",") || [],
+    owners: process.env.OWNER_IDS?.split("1398076402460524545,1291778460641136641,1055209717544276040") || [],
 
     // Default wait time between command uses (in seconds).
     defaultCooldown: 3, 
@@ -70,7 +70,7 @@ export const botConfig = {
       { question: "Why do you want to join?", required: true },
       { question: "Do you have Skill In Coding?", required: true },
       { question: "if a person is spamming what would you do?", required: true },
-      { question: "Any other thing you want to say?", required: true },
+      { question: "Anything else you want to say?", required: true },
     ],
 
     // Embed colors by application status.
