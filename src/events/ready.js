@@ -52,11 +52,11 @@ export default {
     }, cycleInterval || 30000);
   }
 }
-// --- END FIXED STATUS CYCLER BLOCK ---
+
 
 const channelName = ...
 // some code
-const channelName = ... // <-- Change this second one to something else, like 'updatedChannelName'
+const channelName = updatedChannelName // <-- Change this second one to something else, like 'updatedChannelName'
 
 
 
