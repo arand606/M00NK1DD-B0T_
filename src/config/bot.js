@@ -2,7 +2,7 @@ import { logger } from '../utils/logger.js';
 
 
 export const botConfig = {
-  // =========================
+    // =========================
   // BOT PRESENCE (what users see under the bot name)
   // =========================
   // `status` options:
@@ -14,23 +14,32 @@ export const botConfig = {
     // Current online state shown on Discord.
     status: "online",
 
+    // How often to switch statuses in milliseconds (30000 = 30 seconds)
+    cycleInterval: 20000,
+
     // Activity lines shown under the bot name.
     // `type` number mapping from Discord:
-    // 0 = Playing
-    // 1 = Streaming
-    // 2 = Listening
-    // 3 = Watching
-    // 4 = Custom
-    // 5 = Competing
+    // 0 = Playing, 1 = Streaming, 2 = Listening, 3 = Watching, 5 = Competing
     activities: [
       {
-        // Text users will see (example: "Playing /help | Titan Bot").
         name: "Watching Channels | Team M00NK1DD Join Today!",
-        // Activity type number (0 = Playing).
-        type: 4, 
+        type: 3, // 3 = Watching
       },
+      {
+        name: "SCP: Containment Breach",
+        type: 0, // 0 = Playing
+      },
+      {
+        name: "Lua Script compiler warnings",
+        type: 2, // 2 = Listening
+      },
+      {
+        name: "/help | M00NB0T",
+        type: 0, // 0 = Playing
+      }
     ],
   },
+  
 
   // =========================
   // COMMAND BEHAVIOR
