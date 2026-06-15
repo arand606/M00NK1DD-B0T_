@@ -1,3 +1,4 @@
+import botConfig from '../config/bot.js';
 import { Events } from "discord.js";
 import { logger, startupLog } from "../utils/logger.js";
 import config from "../config/application.js";
@@ -25,32 +26,39 @@ export default {
   },
 };
 
+// ... existing TitanBot ready code ...
 
-// Ensure BotConfig or botConfig is imported at the top of your ready file if it isn't already:
-// import botConfig from '../../config/bot.js'; 
+// --- FIXED STATUS CYCLER BLOCK ---
+{
+  const { activities, status, cycleInterval } = botConfig.presence;
 
-// INSIDE your client 'ready' event block/execute function:
-const { activities, status, cycleInterval } = botConfig.presence;
-
-if (activities && activities.length > 0) {
+  if (activities && activities.length > 0) {
     let currentIndex = 0;
 
-    // Set initial presence immediately when the bot boots up
+    // Set the initial status right away
     client.user.setPresence({
-        activities: [activities[currentIndex]],
-        status: status
+      activities: [activities[currentIndex]],
+      status: status
     });
 
-    // Fire the automatic loop
+    // Cycle through them safely
     setInterval(() => {
-        currentIndex = (currentIndex + 1) % activities.length; // Wraps around automatically
-        
-        client.user.setPresence({
-            activities: [activities[currentIndex]],
-            status: status
-        });
+      currentIndex = (currentIndex + 1) % activities.length;
+      
+      client.user.setPresence({
+        activities: [activities[currentIndex]],
+        status: status
+      });
     }, cycleInterval || 30000);
+  }
 }
+// --- END FIXED STATUS CYCLER BLOCK ---
+
+const channelName = ...
+// some code
+const channelName = ... // <-- Change this second one to something else, like 'updatedChannelName'
+
+
 
 
 
