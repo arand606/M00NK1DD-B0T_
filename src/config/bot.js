@@ -15,7 +15,7 @@ export const botConfig = {
     status: "online",
 
     // How often to switch statuses in milliseconds (30000 = 30 seconds)
-    cycleInterval: 18000,
+    cycleInterval: 17000,
 
     // Activity lines shown under the bot name.
     // `type` number mapping from Discord:
