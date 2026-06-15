@@ -10,7 +10,31 @@ export default {
 
   async execute(client) {
     try {
-      client.user.setPresence(config.bot.presence);
+      const { activities, status, cycleInterval } = botConfig.presence;
+
+      // Set initial status
+      if (activities && activities.length > 0) {
+        let currentIndex = 0;
+
+        // Set the initial status right away
+        client.user.setPresence({
+          activities: [activities[currentIndex]],
+          status: status
+        });
+
+        // Cycle through statuses
+        setInterval(() => {
+          currentIndex = (currentIndex + 1) % activities.length;
+          
+          client.user.setPresence({
+            activities: [activities[currentIndex]],
+            status: status
+          });
+        }, cycleInterval || 30000);
+      } else {
+        // Fallback if no activities configured
+        client.user.setPresence(config.bot.presence);
+      }
 
       startupLog(`Ready! Logged in as ${client.user.tag}`);
       startupLog(`Serving ${client.guilds.cache.size} guild(s)`);
@@ -25,40 +49,3 @@ export default {
     }
   },
 };
-
-// ... existing TitanBot ready code ...
-
-// --- FIXED STATUS CYCLER BLOCK ---
-{
-  const { activities, status, cycleInterval } = botConfig.presence;
-
-  if (activities && activities.length > 0) {
-    let currentIndex = 0;
-
-    // Set the initial status right away
-    client.user.setPresence({
-      activities: [activities[currentIndex]],
-      status: status
-    });
-
-    // Cycle through them safely
-    setInterval(() => {
-      currentIndex = (currentIndex + 1) % activities.length;
-      
-      client.user.setPresence({
-        activities: [activities[currentIndex]],
-        status: status
-      });
-    }, cycleInterval || 30000);
-  }
-}
-
-
-const channelName = ...
-// some code
-const channelName = updatedChannelName // <-- Change this second one to something else, like 'updatedChannelName'
-
-
-
-
-
