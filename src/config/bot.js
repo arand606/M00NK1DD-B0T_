@@ -15,7 +15,7 @@ export const botConfig = {
     status: "online",
 
     // How often to switch statuses in milliseconds (30000 = 30 seconds)
-    cycleInterval: 20000,
+    cycleInterval: 10000,
 
     // Activity lines shown under the bot name.
     // `type` number mapping from Discord:
@@ -30,7 +30,7 @@ export const botConfig = {
         type: 0, // 0 = Playing
       },
       {
-        name: "Lua Script compiler warnings",
+        name: "Lua Script warnings",
         type: 2, // 2 = Listening
       },
       {
