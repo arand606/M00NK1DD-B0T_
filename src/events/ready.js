@@ -49,7 +49,7 @@ if (activities && activities.length > 0) {
             activities: [activities[currentIndex]],
             status: status
         });
-    }, cycleInterval || 10000);
+    }, cycleInterval || 30000);
 }
 
 
