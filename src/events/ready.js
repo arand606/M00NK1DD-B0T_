@@ -26,3 +26,31 @@ export default {
 };
 
 
+// Ensure BotConfig or botConfig is imported at the top of your ready file if it isn't already:
+// import botConfig from '../../config/bot.js'; 
+
+// INSIDE your client 'ready' event block/execute function:
+const { activities, status, cycleInterval } = botConfig.presence;
+
+if (activities && activities.length > 0) {
+    let currentIndex = 0;
+
+    // Set initial presence immediately when the bot boots up
+    client.user.setPresence({
+        activities: [activities[currentIndex]],
+        status: status
+    });
+
+    // Fire the automatic loop
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % activities.length; // Wraps around automatically
+        
+        client.user.setPresence({
+            activities: [activities[currentIndex]],
+            status: status
+        });
+    }, cycleInterval || 20000);
+}
+
+
+
