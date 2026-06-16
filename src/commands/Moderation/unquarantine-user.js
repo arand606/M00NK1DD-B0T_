@@ -52,6 +52,8 @@ export default {
       const guild = interaction.guild;
       let channelsModified = 0;
       const failedChannels = [];
+      let roleRemoved = false;
+      let roleRemovalError = null;
 
       for (const [, channel] of guild.channels.cache) {
         try {
@@ -74,6 +76,27 @@ export default {
         }
       }
 
+      // Attempt to remove the quarantine role
+      const QUARANTINE_ROLE_ID = "1516423888605675650";
+      try {
+        const quarantineRole = guild.roles.cache.get(QUARANTINE_ROLE_ID);
+        if (quarantineRole) {
+          if (member.roles.cache.has(QUARANTINE_ROLE_ID)) {
+            await member.roles.remove(quarantineRole, `Unquarantine: ${reason}`);
+            roleRemoved = true;
+            logger.info(`Removed quarantine role from ${targetUser.tag}`);
+          } else {
+            roleRemoved = false; // User didn't have the role to begin with
+          }
+        } else {
+          roleRemovalError = "Quarantine role not found in server";
+          logger.warn(`Quarantine role ${QUARANTINE_ROLE_ID} not found in guild ${guild.id}`);
+        }
+      } catch (error) {
+        roleRemovalError = error.message;
+        logger.warn(`Failed to remove quarantine role from ${targetUser.tag}:`, error);
+      }
+
       // Log the moderation action
       const caseId = await logModerationAction({
         client,
@@ -87,13 +110,24 @@ export default {
             userId: targetUser.id,
             moderatorId: interaction.user.id,
             channelsModified,
-            failedChannels: failedChannels.length > 0 ? failedChannels.join(', ') : 'none'
+            failedChannels: failedChannels.length > 0 ? failedChannels.join(', ') : 'none',
+            roleRemoved,
+            roleRemovalError: roleRemovalError || 'none'
           }
         }
       });
 
       // Prepare response message
       let description = `**Reason:** ${reason}\n**Case ID:** #${caseId}\n**Channels Modified:** ${channelsModified}`;
+      
+      if (roleRemoved) {
+        description += `\n✅ **Quarantine Role:** Removed`;
+      } else if (roleRemovalError) {
+        description += `\n⚠️ **Quarantine Role:** Failed to remove (${roleRemovalError})`;
+      } else {
+        description += `\nℹ️ **Quarantine Role:** User did not have the role`;
+      }
+
       if (failedChannels.length > 0) {
         description += `\n⚠️ **Failed to modify:** ${failedChannels.join(', ')}`;
       }
@@ -118,3 +152,4 @@ export default {
     }
   }
 };
+
