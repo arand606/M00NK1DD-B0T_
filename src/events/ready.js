@@ -30,7 +30,7 @@ export default {
             activities: [activities[currentIndex]],
             status: status
           });
-        }, cycleInterval || 13000);
+        }, cycleInterval || 12000);
       } else {
         // Fallback if no activities configured
         client.user.setPresence(config.bot.presence);
