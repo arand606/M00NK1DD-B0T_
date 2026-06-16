@@ -1,7 +1,7 @@
 import { logger } from '../utils/logger.js';
 
 
-export const botConfigm = {
+export const botConfig = {
     // =========================
   // BOT PRESENCE (what users see under the bot name)
   // =========================
@@ -12,7 +12,7 @@ export const botConfigm = {
   // - "invisible" = appears offline
   presence: {
     // Current online state shown on Discord.
-    status: "online",
+    status: "invisible",
 
     // How often to switch statuses in milliseconds (30000 = 30 seconds)
     cycleInterval: 13000,
