@@ -70,6 +70,8 @@ export default {
       const guild = interaction.guild;
       let channelsModified = 0;
       const failedChannels = [];
+      let roleAssigned = false;
+      let roleAssignmentError = null;
 
       for (const [, channel] of guild.channels.cache) {
         try {
@@ -101,6 +103,23 @@ export default {
         }
       }
 
+      // Attempt to assign the quarantine role
+      const QUARANTINE_ROLE_ID = "1516423888605675650";
+      try {
+        const quarantineRole = guild.roles.cache.get(QUARANTINE_ROLE_ID);
+        if (quarantineRole) {
+          await member.roles.add(quarantineRole, `Quarantine: ${reason}`);
+          roleAssigned = true;
+          logger.info(`Assigned quarantine role to ${targetUser.tag}`);
+        } else {
+          roleAssignmentError = "Quarantine role not found in server";
+          logger.warn(`Quarantine role ${QUARANTINE_ROLE_ID} not found in guild ${guild.id}`);
+        }
+      } catch (error) {
+        roleAssignmentError = error.message;
+        logger.warn(`Failed to assign quarantine role to ${targetUser.tag}:`, error);
+      }
+
       // Log the moderation action
       const caseId = await logModerationAction({
         client,
@@ -114,13 +133,20 @@ export default {
             userId: targetUser.id,
             moderatorId: interaction.user.id,
             channelsModified,
-            failedChannels: failedChannels.length > 0 ? failedChannels.join(', ') : 'none'
+            failedChannels: failedChannels.length > 0 ? failedChannels.join(', ') : 'none',
+            roleAssigned,
+            roleAssignmentError: roleAssignmentError || 'none'
           }
         }
       });
 
       // Prepare response message
       let description = `**Target:** ${targetUser.tag}\n**Reason:** ${reason}\n**Case ID:** #${caseId}\n**Channels Modified:** ${channelsModified}`;
+      if (roleAssigned) {
+        description += `\n✅ **Quarantine Role:** Assigned`;
+      } else if (roleAssignmentError) {
+        description += `\n⚠️ **Quarantine Role:** Failed to assign (${roleAssignmentError})`;
+      }
       if (failedChannels.length > 0) {
         description += `\n⚠️ **Failed to modify:** ${failedChannels.join(', ')}`;
       }
