@@ -12,7 +12,7 @@ export const botConfig = {
   // - "invisible" = appears offline
   presence: {
     // Current online state shown on Discord.
-    status: "invisible",
+    status: "online",
 
     // How often to switch statuses in milliseconds (30000 = 30 seconds)
     cycleInterval: 13000,
