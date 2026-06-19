@@ -30,7 +30,7 @@ export const botConfig = {
         type: 0, // 0 = Playing
       },
       {
-        name: "OWO Please join M00NK1DD~ UWU Nya~ 🥺",
+        name: "Syntax Errors",
         type: 2, // 2 = Listening
       },
       {
