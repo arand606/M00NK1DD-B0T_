@@ -30,7 +30,7 @@ export const botConfig = {
         type: 0, // 0 = Playing
       },
       {
-        name: "Syntax Errors",
+        name: "Made By Vecxson",
         type: 2, // 2 = Listening
       },
       {
