@@ -110,13 +110,18 @@ class TitanBot extends Client {
     const host = process.env.WEB_HOST || '0.0.0.0';
     const corsOrigin = this.config.api?.cors?.origin || '*';
     
+    // FIX #1: Unsafe CORS Configuration - Properly handle wildcard
     app.use((req, res, next) => {
       const allowedOrigins = Array.isArray(corsOrigin) ? corsOrigin : [corsOrigin];
       const origin = req.headers.origin;
+      const hasWildcard = allowedOrigins.includes('*');
       
-      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin || '*');
+      if (hasWildcard) {
+        res.header('Access-Control-Allow-Origin', '*');
+      } else if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
       }
+      
       res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       
@@ -126,9 +131,32 @@ class TitanBot extends Client {
       next();
     });
 
+    // FIX #2: Memory Leak in Rate Limiter - Add cleanup logic
     const requestCounts = new Map();
     const windowMs = 60000; 
     const maxRequests = this.config.api?.rateLimit?.max || 100;
+    const cleanupIntervalMs = 60000; // Cleanup every minute
+    
+    // Cleanup stale entries to prevent memory leak
+    setInterval(() => {
+      const now = Date.now();
+      const windowStart = now - windowMs;
+      let cleaned = 0;
+      
+      for (const [ip, times] of requestCounts) {
+        const validTimes = times.filter(t => t > windowStart);
+        if (validTimes.length === 0) {
+          requestCounts.delete(ip);
+          cleaned++;
+        } else if (validTimes.length < times.length) {
+          requestCounts.set(ip, validTimes);
+        }
+      }
+      
+      if (cleaned > 0) {
+        logger.debug(`Rate limiter cleanup: removed ${cleaned} stale IP entries`);
+      }
+    }, cleanupIntervalMs);
     
     app.use((req, res, next) => {
       const ip = req.ip;
@@ -150,8 +178,17 @@ class TitanBot extends Client {
       next();
     });
 
+    // FIX #6: Database Status Check Ambiguity - Clarify states
     app.get('/health', (req, res) => {
-      const dbStatus = this.db?.getStatus?.() || { isDegraded: 'unknown' };
+      if (!this.db) {
+        return res.status(503).json({
+          status: 'unhealthy',
+          reason: 'Database not initialized',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      const dbStatus = this.db.getStatus();
       const status = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -166,19 +203,28 @@ class TitanBot extends Client {
     });
 
     app.get('/ready', (req, res) => {
-      const dbStatus = this.db?.getStatus?.() || { isDegraded: true };
+      if (!this.db) {
+        return res.status(503).json({
+          ready: false,
+          reason: 'Database not initialized'
+        });
+      }
+      
+      const dbStatus = this.db.getStatus();
       const isReady = this.isReady() && !dbStatus.isDegraded;
 
       if (isReady) {
         return res.status(200).json({
           ready: true,
-          message: 'Bot is ready'
+          message: 'Bot is ready',
+          database: dbStatus.connectionType
         });
       }
 
       res.status(503).json({
         ready: false,
-        reason: !this.isReady() ? 'Bot not Ready' : 'Database degraded'
+        reason: !this.isReady() ? 'Bot not ready' : 'Database degraded',
+        database: dbStatus
       });
     });
 
@@ -190,25 +236,49 @@ class TitanBot extends Client {
       });
     });
 
+    // FIX #10: Missing Request Timeout Configuration
+    app.use((req, res, next) => {
+      req.setTimeout(30000);  // 30 seconds per request
+      res.setTimeout(30000);
+      next();
+    });
+
     const startServer = (port, attempt = 0) => {
       let hasStartedListening = false;
       const server = app.listen(port, host, () => {
         hasStartedListening = true;
         this.webServer = server;
+        // Apply additional server timeouts
+        server.keepAliveTimeout = 65000;
+        server.requestTimeout = 60000;
         startupLog(`✅ Web Server running on ${host}:${port}`);
         startupLog(`Health endpoint: http://localhost:${port}/health`);
         startupLog(`Ready endpoint: http://localhost:${port}/ready`);
       });
 
+      // FIX #4: Unvalidated Port Binding Errors - Handle OS errors properly
+      const OS_ERRORS = {
+        'EADDRINUSE': 'Port is already in use',
+        'EACCES': 'Permission denied (port < 1024 requires elevated privileges)',
+        'EPERM': 'Operation not permitted',
+        'ENOTFOUND': 'Host not found',
+        'EHOSTUNREACH': 'Host is unreachable',
+      };
+
       server.on('error', (error) => {
         const errorCode = error?.code || 'UNKNOWN_ERROR';
-        const errorMessage = error?.message || 'Unknown server error';
+        const errorMessage = OS_ERRORS[errorCode] || error?.message || 'Unknown server error';
 
         if (!hasStartedListening && errorCode === 'EADDRINUSE' && attempt < maxPortRetryAttempts) {
           const nextPort = port + 1;
           startupLog(`Port ${port} is already in use. Trying port ${nextPort}...`);
           setTimeout(() => startServer(nextPort, attempt + 1), 250);
           return;
+        }
+
+        if (!hasStartedListening && errorCode === 'EACCES') {
+          logger.error(`❌ Cannot bind to port ${port}: ${errorMessage}`);
+          process.exit(1);
         }
 
         if (hasStartedListening && errorCode === 'EADDRINUSE') {
@@ -278,9 +348,21 @@ class TitanBot extends Client {
     for (const handler of handlers) {
       try {
         const module = await import(`./handlers/${handler.path}.js`);
-        const loaderFn = handler.type.startsWith('named:') 
-          ? module[handler.type.split(':')[1]] 
-          : module.default;
+        
+        // FIX #3: Type Error in Handler Loader - Add validation
+        let loaderFn;
+        if (handler.type.startsWith('named:')) {
+          const parts = handler.type.split(':');
+          if (parts.length < 2 || !parts[1]) {
+            throw new Error(`Invalid handler type format: "${handler.type}". Expected "named:exportName"`);
+          }
+          loaderFn = module[parts[1]];
+          if (!loaderFn) {
+            throw new Error(`Export "${parts[1]}" not found in ${handler.path}`);
+          }
+        } else {
+          loaderFn = module.default;
+        }
         
         if (typeof loaderFn === 'function') {
           await loaderFn(this);
